@@ -51,6 +51,11 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-facebook: var(--facebook);
+  --color-facebook-foreground: var(--facebook-foreground);
+  --shadow-card: 0 20px 50px -20px oklch(0.3 0.05 160 / 0.25);
+  --shadow-soft: 0 6px 16px -6px oklch(0.3 0.05 160 / 0.35);
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -63,20 +68,22 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --background: oklch(0.985 0.005 160);
+  --foreground: oklch(0.2 0.03 165);
+  --facebook: oklch(0.55 0.2 260);
+  --facebook-foreground: oklch(1 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.62 0.16 158);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.208 0.042 265.755);
   --muted: oklch(0.968 0.007 247.896);
   --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --accent: oklch(0.95 0.05 158);
+  --accent-foreground: oklch(0.4 0.12 158);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
   --border: oklch(0.929 0.013 255.508);
