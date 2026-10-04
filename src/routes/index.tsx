@@ -1,12 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Download, Facebook, Coins, Loader2 } from "lucide-react";
+import { Download, Facebook, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SiteHeader } from "@/components/site-header";
+import { promotionImageQuery } from "@/lib/promotion";
 // Replace this import to change the promotional image.
 import promoImage from "@/assets/earngage-promotion.jpg";
 
 const DOWNLOAD_FILENAME = "earngage-promotion.jpg";
 
 export const Route = createFileRoute("/")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(promotionImageQuery),
   head: () => ({
     meta: [
       { title: "Share & Earn — EarnGage" },
@@ -22,11 +27,13 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [downloading, setDownloading] = useState(false);
+  const { data } = useSuspenseQuery(promotionImageQuery);
+  const currentImage = data.url ?? promoImage;
 
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const res = await fetch(promoImage);
+      const res = await fetch(currentImage);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -37,7 +44,7 @@ function Index() {
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
-      window.open(promoImage, "_blank", "noopener");
+      window.open(currentImage, "_blank", "noopener");
     } finally {
       setDownloading(false);
     }
@@ -50,21 +57,7 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/80 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-          <a href="/" className="flex items-center gap-2 font-bold text-lg text-foreground">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-soft">
-              <Coins className="h-5 w-5" />
-            </span>
-            EarnGage
-          </a>
-          <nav className="flex items-center gap-6 text-sm font-medium text-muted-foreground">
-            <a href="/" className="text-foreground">Tasks</a>
-            <a href="/" className="hidden hover:text-foreground sm:inline">Rewards</a>
-            <a href="/" className="hover:text-foreground">Help</a>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="mx-auto max-w-2xl px-4 py-10 sm:py-14">
         <div className="text-center">
@@ -77,28 +70,29 @@ function Index() {
 
         <section className="mt-8 rounded-3xl border border-border bg-card p-3 shadow-card sm:p-4">
           <img
-            src={promoImage}
+            src={currentImage}
             alt="EarnGage Share & Earn promotional image"
             className="w-full rounded-2xl"
           />
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <button
+            <Button
+              variant="secondary"
               onClick={handleDownload}
               disabled={downloading}
               aria-label="Download promotional image"
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-secondary px-5 py-3.5 font-semibold text-secondary-foreground transition hover:bg-muted active:scale-[0.98] disabled:opacity-70"
+              className="h-12 flex-1 font-semibold active:scale-[0.98]"
             >
               {downloading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
               Download Image
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleShare}
               aria-label="Share this page to Facebook"
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-facebook px-5 py-3.5 font-semibold text-facebook-foreground shadow-soft transition hover:brightness-110 active:scale-[0.98]"
+              className="h-12 flex-1 bg-facebook font-semibold text-facebook-foreground shadow-soft hover:brightness-110 active:scale-[0.98]"
             >
               <Facebook className="h-5 w-5" fill="currentColor" strokeWidth={0} />
               Share to Facebook
-            </button>
+            </Button>
           </div>
         </section>
 
