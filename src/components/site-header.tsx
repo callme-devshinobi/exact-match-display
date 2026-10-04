@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { Settings } from "lucide-react";
 import logoIcon from "@/assets/earngage-icon.png.asset.json";
 
 export function SiteHeader() {
@@ -13,15 +12,6 @@ export function SiteHeader() {
         <nav className="flex items-center gap-5 text-sm font-medium text-muted-foreground">
           <Link to="/" activeProps={{ className: "text-foreground" }} activeOptions={{ exact: true }}>
             Tasks
-          </Link>
-          <Link
-            to="/manage"
-            aria-label="Change promotional image"
-            title="Change promotional image"
-            className="grid h-9 w-9 place-items-center rounded-md transition-colors hover:bg-accent hover:text-foreground"
-            activeProps={{ className: "bg-accent text-foreground" }}
-          >
-            <Settings className="h-4 w-4" />
           </Link>
         </nav>
       </div>
