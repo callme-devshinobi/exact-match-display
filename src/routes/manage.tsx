@@ -1,15 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient, queryOptions } from "@tanstack/react-query";
 import { ChangeEvent, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, ImagePlus, Loader2, Upload } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Copy, ImagePlus, Link2, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site-header";
 import { promotionImageQuery } from "@/lib/promotion";
 import { updatePromotionImage } from "@/lib/promotion.functions";
+import { createShareLink, listShareLinks } from "@/lib/share-links.functions";
 import fallbackImage from "@/assets/earngage-promotion.jpg";
 
+const shareLinksQuery = queryOptions({
+  queryKey: ["share-links"],
+  queryFn: () => listShareLinks(),
+});
+
 export const Route = createFileRoute("/manage")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(promotionImageQuery),
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(promotionImageQuery),
+      context.queryClient.ensureQueryData(shareLinksQuery),
+    ]),
   head: () => ({
     meta: [
       { title: "Change Promotion Image — EarnGage" },
@@ -102,8 +112,73 @@ function ManagePromotion() {
             {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}
           </div>
         </section>
+
+        <ShareLinks />
       </main>
     </div>
+  );
+}
+
+function ShareLinks() {
+  const queryClient = useQueryClient();
+  const { data } = useSuspenseQuery(shareLinksQuery);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+
+  const onPick = async (event: ChangeEvent<HTMLInputElement>) => {
+    const selected = event.target.files?.[0];
+    event.target.value = "";
+    setError(null);
+    if (!selected) return;
+    if (!ALLOWED_TYPES.includes(selected.type)) return setError("Choose a JPG, PNG, or WebP image.");
+    if (selected.size > MAX_SIZE) return setError("Choose an image smaller than 10 MB.");
+    setBusy(true);
+    try {
+      const base64 = await readAsDataUrl(selected);
+      await createShareLink({ data: { base64, contentType: selected.type as "image/jpeg" | "image/png" | "image/webp" } });
+      await queryClient.invalidateQueries({ queryKey: shareLinksQuery.queryKey });
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The share link could not be created.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const copy = async (link: string) => {
+    await navigator.clipboard.writeText(link);
+    setCopied(link);
+    setTimeout(() => setCopied(null), 1500);
+  };
+
+  return (
+    <section className="mt-10">
+      <h2 className="text-2xl font-extrabold text-foreground">Share links</h2>
+      <p className="mt-1 text-muted-foreground">Upload an image to get its own Share &amp; Earn page with a unique link.</p>
+      <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={onPick} className="sr-only" />
+      <Button className="mt-4 h-11" onClick={() => inputRef.current?.click()} disabled={busy}>
+        {busy ? <Loader2 className="animate-spin" /> : <Link2 />}
+        {busy ? "Creating…" : "Upload image & create link"}
+      </Button>
+      {error && <p role="alert" className="mt-3 text-sm font-medium text-destructive">{error}</p>}
+      <ul className="mt-5 space-y-3">
+        {data.links.map((item) => {
+          const link = `${origin}/s/${item.id}`;
+          return (
+            <li key={item.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 shadow-card">
+              <img src={item.url} alt="" className="h-14 w-14 rounded-md object-cover" />
+              <a href={`/s/${item.id}`} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate text-sm font-medium text-foreground hover:underline">{link}</a>
+              <Button variant="outline" size="sm" onClick={() => copy(link)} aria-label="Copy link">
+                {copied === link ? <CheckCircle2 /> : <Copy />}
+              </Button>
+            </li>
+          );
+        })}
+        {data.links.length === 0 && <li className="text-sm text-muted-foreground">No share links yet.</li>}
+      </ul>
+    </section>
   );
 }
 
