@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ManageRouteImport } from './routes/manage'
 import { Route as SIdRouteImport } from './routes/s.$id'
+import { Route as ApiPublicOgImageIdRouteImport } from './routes/api/public/og-image.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const SIdRoute = SIdRouteImport.update({
   path: '/s/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicOgImageIdRoute = ApiPublicOgImageIdRouteImport.update({
+  id: '/api/public/og-image/$id',
+  path: '/api/public/og-image/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/manage': typeof ManageRoute
   '/s/$id': typeof SIdRoute
+  '/api/public/og-image/$id': typeof ApiPublicOgImageIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/manage': typeof ManageRoute
   '/s/$id': typeof SIdRoute
+  '/api/public/og-image/$id': typeof ApiPublicOgImageIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/manage': typeof ManageRoute
   '/s/$id': typeof SIdRoute
+  '/api/public/og-image/$id': typeof ApiPublicOgImageIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/manage' | '/s/$id'
+  fullPaths: '/' | '/manage' | '/s/$id' | '/api/public/og-image/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/manage' | '/s/$id'
-  id: '__root__' | '/' | '/manage' | '/s/$id'
+  to: '/' | '/manage' | '/s/$id' | '/api/public/og-image/$id'
+  id: '__root__' | '/' | '/manage' | '/s/$id' | '/api/public/og-image/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ManageRoute: typeof ManageRoute
   SIdRoute: typeof SIdRoute
+  ApiPublicOgImageIdRoute: typeof ApiPublicOgImageIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/og-image/$id': {
+      id: '/api/public/og-image/$id'
+      path: '/api/public/og-image/$id'
+      fullPath: '/api/public/og-image/$id'
+      preLoaderRoute: typeof ApiPublicOgImageIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ManageRoute: ManageRoute,
   SIdRoute: SIdRoute,
+  ApiPublicOgImageIdRoute: ApiPublicOgImageIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

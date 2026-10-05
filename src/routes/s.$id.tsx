@@ -12,16 +12,24 @@ export const Route = createFileRoute("/s/$id")({
     if (!url) throw notFound();
     return { url };
   },
-  head: () => ({
-    meta: [
-      { title: "Share & Earn — EarnGage" },
-      { name: "description", content: "Download this EarnGage image or share it to Facebook to earn rewards." },
-      { property: "og:title", content: "Share & Earn — EarnGage" },
-      { property: "og:description", content: "Share this EarnGage promotion on Facebook and earn rewards." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: ({ params }) => {
+    const origin = "https://pixel-perfect-render-00990.lovable.app";
+    const imageUrl = `${origin}/api/public/og-image/${params.id}`;
+    return {
+      meta: [
+        { title: "Share & Earn — EarnGage" },
+        { name: "description", content: "Download this EarnGage image or share it to Facebook to earn rewards." },
+        { property: "og:title", content: "Share & Earn — EarnGage" },
+        { property: "og:description", content: "Share this EarnGage promotion on Facebook and earn rewards." },
+        { property: "og:type", content: "website" },
+        { property: "og:image", content: imageUrl },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "1200" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:image", content: imageUrl },
+      ],
+    };
+  },
   component: SharePage,
 });
 
