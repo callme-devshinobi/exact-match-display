@@ -14,7 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      share_links: {
+        Row: {
+          created_at: string
+          id: string
+          target_url: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          target_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          target_url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
