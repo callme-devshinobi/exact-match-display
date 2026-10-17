@@ -8,6 +8,13 @@
       "when": 1791099223482,
       "tag": "0000_lock_promotional_image_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792267355073,
+      "tag": "0001_share_link_targets",
+      "breakpoints": true
     }
   ]
 }
