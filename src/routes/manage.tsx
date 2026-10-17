@@ -126,7 +126,7 @@ function ShareLinks() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [targetInput, setTargetInput] = useState("");
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   const onPick = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -136,11 +136,23 @@ function ShareLinks() {
     if (!selected) return;
     if (!ALLOWED_TYPES.includes(selected.type)) return setError("Choose a JPG, PNG, or WebP image.");
     if (selected.size > MAX_SIZE) return setError("Choose an image smaller than 10 MB.");
+    const trimmedTarget = targetInput.trim();
+    if (trimmedTarget && !/^https?:\/\//i.test(trimmedTarget)) {
+      setError("Enter a destination link starting with http:// or https://.");
+      return;
+    }
     setBusy(true);
     try {
       const base64 = await readAsDataUrl(selected);
-      await createShareLink({ data: { base64, contentType: selected.type as "image/jpeg" | "image/png" | "image/webp" } });
+      await createShareLink({
+        data: {
+          base64,
+          contentType: selected.type as "image/jpeg" | "image/png" | "image/webp",
+          targetUrl: trimmedTarget || undefined,
+        },
+      });
       await queryClient.invalidateQueries({ queryKey: shareLinksQuery.queryKey });
+      setTargetInput("");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The share link could not be created.");
     } finally {
@@ -148,38 +160,106 @@ function ShareLinks() {
     }
   };
 
-  const copy = async (link: string) => {
-    await navigator.clipboard.writeText(link);
-    setCopied(link);
-    setTimeout(() => setCopied(null), 1500);
-  };
-
   return (
     <section className="mt-10">
       <h2 className="text-2xl font-extrabold text-foreground">Share links</h2>
       <p className="mt-1 text-muted-foreground">Upload an image to get its own Share &amp; Earn page with a unique link.</p>
-      <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={onPick} className="sr-only" />
-      <Button className="mt-4 h-11" onClick={() => inputRef.current?.click()} disabled={busy}>
-        {busy ? <Loader2 className="animate-spin" /> : <Link2 />}
-        {busy ? "Creating…" : "Upload image & create link"}
-      </Button>
+      <div className="mt-4 space-y-3">
+        <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={onPick} className="sr-only" />
+        <Button className="h-11" onClick={() => inputRef.current?.click()} disabled={busy}>
+          {busy ? <Loader2 className="animate-spin" /> : <Link2 />}
+          {busy ? "Creating…" : "Upload image & create link"}
+        </Button>
+        <div>
+          <label htmlFor="new-target-url" className="text-sm font-medium text-foreground">Destination link (optional)</label>
+          <Input
+            id="new-target-url"
+            type="url"
+            placeholder="https://your-destination-link.com"
+            value={targetInput}
+            onChange={(event) => setTargetInput(event.target.value)}
+            className="mt-1 h-10"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">People who click this new link from Facebook are sent here.</p>
+        </div>
+      </div>
       {error && <p role="alert" className="mt-3 text-sm font-medium text-destructive">{error}</p>}
       <ul className="mt-5 space-y-3">
-        {data.links.map((item) => {
-          const link = `${origin}/s/${item.id}`;
-          return (
-            <li key={item.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 shadow-card">
-              <img src={item.url} alt="" className="h-14 w-14 rounded-md object-cover" />
-              <a href={`/s/${item.id}`} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate text-sm font-medium text-foreground hover:underline">{link}</a>
-              <Button variant="outline" size="sm" onClick={() => copy(link)} aria-label="Copy link">
-                {copied === link ? <CheckCircle2 /> : <Copy />}
-              </Button>
-            </li>
-          );
-        })}
+        {data.links.map((item) => (
+          <ShareLinkRow key={item.id} item={item} origin={origin} />
+        ))}
         {data.links.length === 0 && <li className="text-sm text-muted-foreground">No share links yet.</li>}
       </ul>
     </section>
+  );
+}
+
+function ShareLinkRow({
+  item,
+  origin,
+}: {
+  item: { id: string; url: string; targetUrl: string | null };
+  origin: string;
+}) {
+  const queryClient = useQueryClient();
+  const link = `${origin}/s/${item.id}`;
+  const [copied, setCopied] = useState(false);
+  const [target, setTarget] = useState(item.targetUrl ?? "");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const saveTarget = async () => {
+    const trimmed = target.trim();
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+      setError("Enter a link starting with http:// or https://.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await setShareLinkTarget({ data: { id: item.id, targetUrl: trimmed } });
+      await queryClient.invalidateQueries({ queryKey: shareLinksQuery.queryKey });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1500);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The destination link could not be saved.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <li className="space-y-3 rounded-lg border border-border bg-card p-3 shadow-card">
+      <div className="flex items-center gap-3">
+        <img src={item.url} alt="" className="h-14 w-14 rounded-md object-cover" />
+        <a href={`/s/${item.id}`} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate text-sm font-medium text-foreground hover:underline">{link}</a>
+        <Button variant="outline" size="sm" onClick={copy} aria-label="Copy link">
+          {copied ? <CheckCircle2 /> : <Copy />}
+        </Button>
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          type="url"
+          value={target}
+          onChange={(event) => setTarget(event.target.value)}
+          placeholder="https://your-destination-link.com"
+          aria-label={`Destination link for ${link}`}
+          className="h-9 flex-1"
+        />
+        <Button variant="outline" size="sm" className="h-9" onClick={saveTarget} disabled={saving}>
+          {saving ? <Loader2 className="animate-spin" /> : saved ? <CheckCircle2 /> : null}
+          {saving ? "Saving…" : saved ? "Saved" : "Save destination"}
+        </Button>
+      </div>
+      {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}
+    </li>
   );
 }
 
