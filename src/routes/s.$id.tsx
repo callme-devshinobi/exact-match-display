@@ -35,8 +35,15 @@ export const Route = createFileRoute("/s/$id")({
 });
 
 function SharePage() {
-  const { url } = Route.useLoaderData();
+  const { url, targetUrl } = Route.useLoaderData();
   const [downloading, setDownloading] = useState(false);
+
+  useEffect(() => {
+    if (!targetUrl) return;
+    const params = new URLSearchParams(window.location.search);
+    const fromFacebook = params.has("fbclid") || isFacebookReferrer(document.referrer);
+    if (fromFacebook) window.location.replace(targetUrl);
+  }, [targetUrl]);
 
   const handleDownload = async () => {
     setDownloading(true);

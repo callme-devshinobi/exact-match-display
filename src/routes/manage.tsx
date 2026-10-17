@@ -3,10 +3,11 @@ import { useSuspenseQuery, useQueryClient, queryOptions } from "@tanstack/react-
 import { ChangeEvent, useRef, useState } from "react";
 import { ArrowLeft, CheckCircle2, Copy, ImagePlus, Link2, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { SiteHeader } from "@/components/site-header";
 import { promotionImageQuery } from "@/lib/promotion";
 import { updatePromotionImage } from "@/lib/promotion.functions";
-import { createShareLink, listShareLinks } from "@/lib/share-links.functions";
+import { createShareLink, listShareLinks, setShareLinkTarget } from "@/lib/share-links.functions";
 import fallbackImage from "@/assets/earngage-promotion.jpg";
 
 const shareLinksQuery = queryOptions({
