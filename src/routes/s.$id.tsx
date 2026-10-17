@@ -1,16 +1,17 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, Facebook, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site-header";
 import { getShareLinkImage } from "@/lib/share-links.functions";
+import { isFacebookReferrer } from "@/lib/facebook-referrer";
 
 export const Route = createFileRoute("/s/$id")({
   loader: async ({ params }) => {
     if (!/^[a-z0-9]{6,16}$/.test(params.id)) throw notFound();
-    const { url } = await getShareLinkImage({ data: { id: params.id } });
-    if (!url) throw notFound();
-    return { url };
+    const result = await getShareLinkImage({ data: { id: params.id } });
+    if (!result.url) throw notFound();
+    return { url: result.url, targetUrl: result.targetUrl };
   },
   head: ({ params }) => {
     const origin = "https://pixel-perfect-render-00990.lovable.app";
